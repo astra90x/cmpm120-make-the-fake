@@ -13,6 +13,41 @@ const Entity = class {
         }
         this.size = options.size ?? options.width ?? this.definition.size ?? this.definition.width
         this.height = options.height ?? this.definition.height ?? null
+
+        this.owner = null
+        this.inventory = Array(this.definition.inventorySize ?? 0).fill(null)
+        this.inventoryActiveIndex = 0
+    }
+
+    inventoryPoint() {
+        let { x, y, angle } = this.definition.inventoryActiveAt
+        return {
+            x: this.x + x * Math.cos(this.angle) - y * Math.sin(this.angle),
+            y: this.y + x * Math.sin(this.angle) + y * Math.cos(this.angle),
+            angle: this.angle + angle,
+        }
+    }
+
+    grab(item, active = false) {
+        if (item == null) return
+        let slot = this.inventory.indexOf(null)
+        if (slot === -1) return
+        if (item.owner) item.owner.drop(item)
+        item.owner = this
+        this.inventory[slot] = item
+        if (active) this.inventoryActiveIndex = slot
+    }
+
+    drop(item = this.inventory[this.inventoryActiveIndex]) {
+        if (item == null) return
+        let slot = this.inventory.indexOf(item)
+        if (slot === -1) return
+        item.owner = null
+        this.inventory[slot] = null
+        let { x, y, angle } = this.inventoryPoint()
+        item.x = x
+        item.y = y
+        item.angle = angle
     }
 
     update() {
@@ -47,8 +82,19 @@ const World = class {
         this.spawn('table', { x: 200, y: 200 })
         this.spawn('couch', { x: 100, y: 200 })
         this.spawn('couch', { x: 200, y: 100, angle: Math.PI / 2 })
-        this.spawn('enemy', { x: 600, y: 300 })
-        return this.spawn('player', { x: 100, y: -50 })
+
+        let enemy = this.spawn('enemy', { x: 600, y: 300 })
+        enemy.grab(this.spawn('knife'))
+        enemy.inventoryActiveIndex = 1
+
+        let player = this.spawn('player', { x: 100, y: -50 })
+        player.grab(this.spawn('knife'))
+        player.grab(this.spawn('syringeM99'), true)
+        player.grab(this.spawn('plasticWrap'))
+        player.grab(this.spawn('slide'))
+        player.grab(this.spawn('plasticBag'))
+
+        return player
     }
 
     update() {
@@ -56,6 +102,7 @@ const World = class {
         let fixed = new Set()
         let dynamic = new Set()
         for (let e of this.entities.values()) {
+            if (e.owner != null) continue
             let physics = e.definition.physics
             if (physics == null) continue
             if (physics.mass == null) fixed.add(e)
@@ -101,8 +148,8 @@ const World = class {
             let x = b.x - a.x
             let y = b.y - a.y
             if (a.angle !== 0) {
-                let tmp = x * Math.cos(a.angle) - y * Math.sin(a.angle)
-                y = x * Math.sin(a.angle) + y * Math.cos(a.angle)
+                let tmp = x * Math.cos(-a.angle) - y * Math.sin(-a.angle)
+                y = x * Math.sin(-a.angle) + y * Math.cos(-a.angle)
                 x = tmp
             }
             let r = b.size / 2
@@ -125,8 +172,8 @@ const World = class {
                 y += dy / d * push
             }
             if (a.angle !== 0) {
-                let tmp = x * Math.cos(-a.angle) - y * Math.sin(-a.angle)
-                y = x * Math.sin(-a.angle) + y * Math.cos(-a.angle)
+                let tmp = x * Math.cos(a.angle) - y * Math.sin(a.angle)
+                y = x * Math.sin(a.angle) + y * Math.cos(a.angle)
                 x = tmp
             }
             b.x = x + a.x
@@ -151,8 +198,8 @@ const Game = class {
     }
 
     render(time, delta) {
-        this.player.control.move.x = !!this.keys.d - !!this.keys.a
-        this.player.control.move.y = !!this.keys.s - !!this.keys.w
+        this.player.control.move.x = !!this.keys.KeyD - !!this.keys.KeyA
+        this.player.control.move.y = !!this.keys.KeyS - !!this.keys.KeyW
         this.player.control.aim = { x: this.mouse.x - this.cx.width / 2, y: this.mouse.y - this.cx.height / 2 }
 
         let mspt = 0.02 // 50 TPS
@@ -163,6 +210,7 @@ const Game = class {
 
         this.cx.startFrame()
         this.renderWorld()
+        this.renderInterface()
         this.cx.endFrame()
     }
 
@@ -171,6 +219,9 @@ const Game = class {
         this.cx.translateCanvas(at?.x ?? e.x, at?.y ?? e.y)
         this.cx.rotateCanvas(at == null ? e.angle : at.angle ?? Math.PI * -0.75)
         e.definition.render(this.cx, e.size, e.height, e)
+        if (e.inventory[e.inventoryActiveIndex]) {
+            this.renderEntity(e.inventory[e.inventoryActiveIndex], e.definition.inventoryActiveAt)
+        }
         this.cx.restore()
     }
 
@@ -200,10 +251,22 @@ const Game = class {
 
 
         for (let e of this.world.entities.values()) {
-            this.renderEntity(e)
+            if (e.owner == null) this.renderEntity(e)
         }
 
         this.cx.restore()
+    }
+
+    renderInterface() {
+        let { inventory } = this.player
+        for (let i = 0; i < inventory.length; i++) {
+            let rx = i - (inventory.length - 1) / 2
+            this.cx.fillStyle(0x000000, i === this.player.inventoryActiveIndex ? 0.3 : 0.1)
+            this.cx.fillRect(this.cx.width / 2 + rx * 80 - 30, this.cx.height - 80, 60, 60)
+            if (inventory[i]) {
+                this.renderEntity(inventory[i], { x: this.cx.width / 2 + rx * 80, y: this.cx.height - 50 })
+            }
+        }
     }
 
     mouseDown() {
@@ -217,6 +280,22 @@ const Game = class {
     }
     keyDown(key) {
         this.keys[key] = true
+        if (/^Digit[1-8]$/.test(key)) this.player.inventoryActiveIndex = key.charAt(5) - 1
+        if (key === 'KeyQ') this.player.drop()
+        if (key === 'KeyF') {
+            let point = this.player.inventoryPoint()
+            let closest = null
+            let closestD2 = 40 * 40
+            for (let e of this.world.entities.values()) {
+                if (e === this.player || e.definition.item == null) continue
+                let d2 = (point.x - e.x) * (point.x - e.x) + (point.y - e.y) * (point.y - e.y)
+                if (d2 < closestD2) {
+                    closest = e
+                    closestD2 = d2
+                }
+            }
+            this.player.grab(closest)
+        }
     }
     keyUp(key) {
         this.keys[key] = false
@@ -297,8 +376,8 @@ export const Play = class extends Phaser.Scene {
         this.input.on('pointerdown', e => this.gameLogic.mouseDown(e.position))
         this.input.on('pointermove', e => this.gameLogic.mouseMove(e.position))
         this.input.on('pointerup', e => this.gameLogic.mouseUp(e.position))
-        this.input.keyboard.on('keydown', e => !e.repeat && this.gameLogic.keyDown(e.key))
-        this.input.keyboard.on('keyup', e => this.gameLogic.keyUp(e.key))
+        this.input.keyboard.on('keydown', e => !e.repeat && this.gameLogic.keyDown(e.code))
+        this.input.keyboard.on('keyup', e => this.gameLogic.keyUp(e.code))
     }
 
     update(time, delta) {

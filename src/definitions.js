@@ -1,6 +1,8 @@
 export let player = {
     physics: { shape: 'circle', mass: 50 },
     size: 56,
+    inventorySize: 8,
+    inventoryActiveAt: { x: 30, y: 18, angle: 0 },
     render(cx) {
         cx.fillStyle(0xdf9778)
         cx.lineStyle(4, 0x444444)
@@ -18,6 +20,8 @@ export let player = {
 export let enemy = {
     physics: { shape: 'circle', mass: 50 },
     size: 56,
+    inventorySize: 2,
+    inventoryActiveAt: { x: 30, y: 18, angle: 0 },
     render(cx) {
         cx.fillStyle(0xefcab8)
         cx.lineStyle(4, 0x444444)
@@ -64,5 +68,100 @@ export let table = {
         cx.lineStyle(4, 0x444444)
         cx.fillCircle(0, 0, 45)
         cx.strokeCircle(0, 0, 45)
+    }
+}
+
+export let knife = {
+    item: 'Hunting Knife',
+    render(cx) {
+        cx.fillStyle(0xeeeeee)
+        cx.lineStyle(3, 0x444444)
+        cx.fillTriangle(0, -4, 0, 4, 12, 0)
+        cx.strokeTriangle(0, -4, 0, 4, 12, 0)
+
+        cx.fillStyle(0x111111)
+        cx.lineStyle(3, 0x444444)
+        cx.fillRect(-8, -4, 8, 8)
+        cx.strokeRect(-8, -4, 8, 8)
+    }
+}
+
+export let syringe = {
+    item: 'Syringe',
+    render(cx) {
+        cx.fillStyle(0xdddddd, 0.3)
+        cx.lineStyle(3, 0x444444)
+        cx.fillRect(-8, -4, 14, 8)
+        cx.strokeRect(-8, -4, 14, 8)
+        cx.fillStyle(0x444444)
+        cx.fillTriangle(6, -2, 6, 2, 18, 0)
+    }
+}
+
+export let syringeM99 = {
+    item: 'Syringe of M99',
+    render(cx) {
+        cx.fillStyle(0x990099, 0.7)
+        cx.lineStyle(3, 0x444444)
+        cx.fillRect(-8, -4, 14, 8)
+        cx.strokeRect(-8, -4, 14, 8)
+        cx.fillStyle(0x444444)
+        cx.fillTriangle(6, -2, 6, 2, 18, 0)
+    }
+}
+
+export let syringeBlood = {
+    item: 'Syringe of Blood',
+    render(cx) {
+        cx.fillStyle(0xcc0000, 0.7)
+        cx.lineStyle(3, 0x444444)
+        cx.fillRect(-8, -4, 14, 8)
+        cx.strokeRect(-8, -4, 14, 8)
+        cx.fillStyle(0x444444)
+        cx.fillTriangle(6, -2, 6, 2, 18, 0)
+    }
+}
+
+export let plasticWrap = {
+    item: 'Plastic Wrap',
+    render(cx) {
+        cx.fillStyle(0x6b5531)
+        cx.fillRect(-2, -16, 4, 32)
+        cx.fillStyle(0xdddddd, 0.5)
+        cx.lineStyle(3, 0x444444)
+        cx.fillRect(-6, -16, 12, 32)
+        cx.strokeRect(-6, -16, 12, 32)
+    }
+}
+
+export let plasticBag = {
+    item: 'Plastic Bag',
+    render(cx) {
+        cx.fillStyle(0x222222, 0.9)
+        cx.lineStyle(3, 0x444444)
+        cx.fillCircle(6, 0, 16)
+        cx.strokeCircle(6, 0, 16)
+    }
+}
+
+export let slide = {
+    item: 'Filled Blood Slide',
+    render(cx) {
+        cx.fillStyle(0xcccccc, 0.2)
+        cx.lineStyle(3, 0x444444)
+        cx.fillRect(-4, -8, 8, 16)
+        cx.strokeRect(-4, -8, 8, 16)
+    }
+}
+
+export let slideBlood = {
+    item: 'Empty Blood Slide',
+    render(cx) {
+        cx.fillStyle(0xcccccc, 0.2)
+        cx.lineStyle(3, 0x444444)
+        cx.fillRect(-4, -8, 8, 16)
+        cx.strokeRect(-4, -8, 8, 16)
+        cx.fillStyle(0xcc0000, 0.7)
+        cx.fillCircle(0, 0, 3)
     }
 }
