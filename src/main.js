@@ -8,10 +8,6 @@ new Phaser.Game({
     height: 900,
     scale: {
         autoCenter: Phaser.Scale.CENTER_BOTH,
-        mode: Phaser.Scale.FIT,
-    },
-    audio: {
-        noAudio: true,
     },
     scene: [Load, Start, Play],
 })
