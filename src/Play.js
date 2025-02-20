@@ -3,20 +3,55 @@ import * as DEFINITIONS from './definitions.js'
 const Entity = class {
     constructor(id, kind, options = {}) {
         this.id = id
-        this.x = options.x ?? NaN
-        this.y = options.y ?? NaN
-        this.angle = options.angle ?? 0
-        this.definition = DEFINITIONS[kind]
+
+        this.x = NaN
+        this.y = NaN
+        this.angle = 0
+        this.kind = ''
+        this.definition = null
+        this.size = null
+        this.height = null
+        this.health = 1
+        this.define(kind, options)
+
+        this.incomingDamage = 0
+        this.incomingDestruction = false
         this.control = {
             move: { x: 0, y: 0 },
             aim: { x: 0, y: 0 },
         }
-        this.size = options.size ?? options.width ?? this.definition.size ?? this.definition.width
-        this.height = options.height ?? this.definition.height ?? null
+
+        this.effects = new Map()
 
         this.owner = null
         this.inventory = Array(this.definition.inventorySize ?? 0).fill(null)
         this.inventoryActiveIndex = 0
+    }
+
+    get width() {
+        return this.size
+    }
+
+    set width(width) {
+        this.size = width
+    }
+
+    define(kind, options = {}) {
+        if (options.x != null) this.x = options.x
+        if (options.y != null) this.y = options.y
+        if (options.angle != null) this.angle = options.angle
+        this.kind = kind
+        this.definition = DEFINITIONS[kind]
+        this.size = options.size ?? options.width ?? this.definition.size ?? this.definition.width ?? this.size
+        this.height = options.height ?? this.definition.height ?? this.height
+    }
+
+    addEffect(effect, duration = Infinity) {
+        this.effects.set(effect, Date.now() / 1000 + duration)
+    }
+
+    hasEffect(effect) {
+        return this.effects.get(effect) > Date.now() / 1000
     }
 
     inventoryPoint() {
@@ -57,6 +92,18 @@ const Entity = class {
         if (this.control.aim.x || this.control.aim.y) {
             this.angle = Math.atan2(this.control.aim.y, this.control.aim.x)
         }
+
+        this.health -= this.incomingDamage
+        this.incomingDamage = 0
+        if (this.health < 0) {
+            this.health = 0
+        } else if (!(this.health <= 1)) {
+            this.health = 1
+        }
+    }
+
+    destroy() {
+        this.incomingDestruction = true
     }
 }
 
@@ -118,6 +165,13 @@ const World = class {
             for (let b of dynamic) {
                 if (a.id > b.id) this.collidePair(a, b)
             }
+        }
+
+        for (let [id, e] of this.entities.entries()) {
+            if (!e.incomingDestruction) continue
+            for (let i of e.inventory) e.drop(i)
+            if (e.parent) e.parent.drop(e)
+            this.entities.delete(id)
         }
     }
 
@@ -270,7 +324,21 @@ const Game = class {
     }
 
     mouseDown() {
+        let item = this.player.inventory[this.player.inventoryActiveIndex]
+        if (item == null) return
 
+        let point = this.player.inventoryPoint()
+        let closest = null
+        let closestD2 = 40 * 40
+        for (let e of this.world.entities.values()) {
+            if (e === this.player) continue
+            let d2 = (point.x - e.x) * (point.x - e.x) + (point.y - e.y) * (point.y - e.y)
+            if (d2 < closestD2) {
+                closest = e
+                closestD2 = d2
+            }
+        }
+        item.definition.use?.({ target: closest, self: item, player: this.player })
     }
     mouseMove(mouse) {
         this.mouse = mouse
