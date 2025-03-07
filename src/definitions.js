@@ -22,11 +22,26 @@ export let enemy = {
     size: 56,
     inventorySize: 2,
     inventoryActiveAt: { x: 30, y: 18, angle: 0 },
-    render(cx) {
+    render(cx, e) {
         cx.fillStyle(0xefcab8)
         cx.lineStyle(4, 0x444444)
+        cx.fillCircle(0, 0, 28)
+
+        if (e.health < 0.95) {
+            cx.fillStyle(0xcc0000, 0.7)
+            cx.fillCircle(5, 1, Math.sqrt(1 - e.health / 0.95) * 15)
+            if (e.health < 0.6) {
+                cx.fillCircle(-6, -3, Math.sqrt(1 - e.health / 0.6) * 6)
+            }
+        }
+        if (e.hasEffect('bound')) {
+            cx.fillStyle(0xdddddd, 0.7)
+            cx.fillRect(-10, -27, 20, 54)
+        }
+        cx.strokeCircle(0, 0, 28)
+
+        cx.fillStyle(0xefcab8)
         for (let [x, y, radius] of [
-            [0, 0, 28],
             [22, -18, 8],
             [22, 18, 8],
         ]) {
@@ -38,7 +53,7 @@ export let enemy = {
 
 export let wall = {
     physics: { shape: 'rect' },
-    render(cx, width, height) {
+    render(cx, { width, height }) {
         cx.fillStyle(0x999999)
         cx.fillRect(-width / 2, -height / 2, width, height)
         cx.lineStyle(4, 0x444444)
@@ -50,7 +65,7 @@ export let couch = {
     physics: { shape: 'rect' },
     width: 50,
     height: 90,
-    render(cx, width, height) {
+    render(cx, { width, height }) {
         cx.fillStyle(0x76030d)
         cx.fillRect(-width / 2, -height / 2, width, height)
         cx.lineStyle(4, 0x444444)

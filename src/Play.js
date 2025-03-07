@@ -1,5 +1,26 @@
 import * as DEFINITIONS from './definitions.js'
 
+const Controller = class {
+    constructor(entity, waypoints, world) {
+        this.entity = entity
+        this.waypoints = waypoints
+        this.world = world
+
+        this.currentWaypoint = null
+        this.state = 'idle'
+    }
+
+    process() {
+        if (this.currentWaypoint == null) {
+            if (Math.random() < 0.05) this.currentWaypoint = this.waypoints[Math.floor(Math.random() * this.waypoints.length)]
+        }
+
+        let move = this.currentWaypoint ? { x: this.currentWaypoint.x - this.entity.x, y: this.currentWaypoint.y - this.entity.y } : { x: 0, y: 0 }
+        if (move.x * move.x + move.y * move.y < 20) this.currentWaypoint = null
+        return { move, aim: move }
+    }
+}
+
 const Entity = class {
     constructor(id, kind, options = {}) {
         this.id = id
@@ -20,6 +41,7 @@ const Entity = class {
             move: { x: 0, y: 0 },
             aim: { x: 0, y: 0 },
         }
+        this.controller = null
 
         this.effects = new Map()
 
@@ -86,19 +108,27 @@ const Entity = class {
     }
 
     update() {
-        let factor = this.control.move.x && this.control.move.y ? 0.7 : 1
-        this.x += this.control.move.x * factor * 5
-        this.y += this.control.move.y * factor * 5
-        if (this.control.aim.x || this.control.aim.y) {
-            this.angle = Math.atan2(this.control.aim.y, this.control.aim.x)
-        }
-
         this.health -= this.incomingDamage
         this.incomingDamage = 0
         if (this.health < 0) {
             this.health = 0
         } else if (!(this.health <= 1)) {
             this.health = 1
+        }
+
+        if (!this.hasEffect('unconscious') && this.health > 0) {
+            if (this.controller != null) {
+                this.control = { ...this.control, ...this.controller.process() }
+            }
+
+            if (!this.hasEffect('bound')) {
+                let factor = Math.max(1, Math.sqrt(this.control.move.x * this.control.move.x + this.control.move.y * this.control.move.y))
+                this.x += this.control.move.x / factor * 5
+                this.y += this.control.move.y / factor * 5
+                if (this.control.aim.x || this.control.aim.y) {
+                    this.angle = Math.atan2(this.control.aim.y, this.control.aim.x)
+                }
+            }
         }
     }
 
@@ -133,6 +163,13 @@ const World = class {
         let enemy = this.spawn('enemy', { x: 600, y: 300 })
         enemy.grab(this.spawn('knife'))
         enemy.inventoryActiveIndex = 1
+        enemy.controller = new Controller(enemy, [
+            { x: 600, y: 300 },
+            { x: 400, y: 100 },
+            { x: 400, y: 300 },
+            { x: 600, y: 100 },
+            { x: 300, y: 0 },
+        ], this)
 
         let player = this.spawn('player', { x: 100, y: -50 })
         player.grab(this.spawn('knife'))
@@ -170,7 +207,7 @@ const World = class {
         for (let [id, e] of this.entities.entries()) {
             if (!e.incomingDestruction) continue
             for (let i of e.inventory) e.drop(i)
-            if (e.parent) e.parent.drop(e)
+            if (e.owner) e.owner.drop(e)
             this.entities.delete(id)
         }
     }
@@ -272,7 +309,7 @@ const Game = class {
         this.cx.save()
         this.cx.translateCanvas(at?.x ?? e.x, at?.y ?? e.y)
         this.cx.rotateCanvas(at == null ? e.angle : at.angle ?? Math.PI * -0.75)
-        e.definition.render(this.cx, e.size, e.height, e)
+        e.definition.render(this.cx, e)
         if (e.inventory[e.inventoryActiveIndex]) {
             this.renderEntity(e.inventory[e.inventoryActiveIndex], e.definition.inventoryActiveAt)
         }
