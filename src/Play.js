@@ -106,6 +106,8 @@ const Entity = class {
         item.x = x
         item.y = y
         item.angle = angle
+        item.velocity.x = Math.cos(angle) * 25
+        item.velocity.y = Math.sin(angle) * 25
     }
 
     update() {
@@ -346,10 +348,12 @@ const Game = class {
             }
         }
 
-
+        let renderLayers = [[], [], [], []]
         for (let e of this.world.entities.values()) {
-            if (e.owner == null) this.renderEntity(e)
+            if (e.owner == null) renderLayers[e.definition.renderLayer].push(e)
         }
+        for (let layer of renderLayers)
+            for (let e of layer) this.renderEntity(e)
 
         this.cx.restore()
     }
@@ -374,7 +378,7 @@ const Game = class {
         let closest = null
         let closestD2 = 40 * 40
         for (let e of this.world.entities.values()) {
-            if (e === this.player) continue
+            if (e === this.player || e.owner != null) continue
             let d2 = (point.x - e.x) * (point.x - e.x) + (point.y - e.y) * (point.y - e.y)
             if (d2 < closestD2) {
                 closest = e
@@ -398,7 +402,7 @@ const Game = class {
             let closest = null
             let closestD2 = 40 * 40
             for (let e of this.world.entities.values()) {
-                if (e === this.player || e.definition.item == null) continue
+                if (e === this.player || e.definition.item == null || e.owner != null) continue
                 let d2 = (point.x - e.x) * (point.x - e.x) + (point.y - e.y) * (point.y - e.y)
                 if (d2 < closestD2) {
                     closest = e

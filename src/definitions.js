@@ -1,3 +1,8 @@
+const BACKGROUND = 0
+const FURNITURE = 1
+const ITEM = 2
+const CHARACTER = 3
+
 export let player = {
     physics: { shape: 'circle', mass: 50 },
     size: 56,
@@ -30,6 +35,7 @@ export let player = {
             cx.strokeCircle(x, y, radius)
         }
     },
+    renderLayer: CHARACTER,
 }
 
 export let enemy = {
@@ -86,6 +92,7 @@ export let enemy = {
             cx.strokeCircle(x, y, radius)
         }
     },
+    renderLayer: CHARACTER,
 }
 
 export let wall = {
@@ -96,6 +103,7 @@ export let wall = {
         cx.lineStyle(4, 0x444444)
         cx.strokeRect(-width / 2, -height / 2, width, height)
     },
+    renderLayer: BACKGROUND,
 }
 
 export let couch = {
@@ -110,6 +118,7 @@ export let couch = {
         let armRest = 14
         cx.strokeRect(-width / 2 + armRest, -height / 2 + armRest, width - armRest, height - armRest * 2)
     },
+    renderLayer: FURNITURE,
 }
 
 export let table = {
@@ -121,6 +130,7 @@ export let table = {
         cx.fillCircle(0, 0, 45)
         cx.strokeCircle(0, 0, 45)
     },
+    renderLayer: FURNITURE,
 }
 
 export let knife = {
@@ -140,6 +150,7 @@ export let knife = {
         cx.fillRect(-8, -4, 8, 8)
         cx.strokeRect(-8, -4, 8, 8)
     },
+    renderLayer: ITEM,
 }
 
 export let syringe = {
@@ -157,6 +168,7 @@ export let syringe = {
         cx.fillStyle(0x444444)
         cx.fillTriangle(6, -2, 6, 2, 18, 0)
     },
+    renderLayer: ITEM,
 }
 
 export let syringeM99 = {
@@ -174,6 +186,7 @@ export let syringeM99 = {
         cx.fillStyle(0x444444)
         cx.fillTriangle(6, -2, 6, 2, 18, 0)
     },
+    renderLayer: ITEM,
 }
 
 export let syringeBlood = {
@@ -193,6 +206,7 @@ export let syringeBlood = {
         cx.fillStyle(0x444444)
         cx.fillTriangle(6, -2, 6, 2, 18, 0)
     },
+    renderLayer: ITEM,
 }
 
 export let plasticWrap = {
@@ -210,6 +224,7 @@ export let plasticWrap = {
         cx.fillRect(-6, -16, 12, 32)
         cx.strokeRect(-6, -16, 12, 32)
     },
+    renderLayer: ITEM,
 }
 
 export let plasticBag = {
@@ -225,6 +240,7 @@ export let plasticBag = {
         cx.fillCircle(6, 0, 16)
         cx.strokeCircle(6, 0, 16)
     },
+    renderLayer: ITEM,
 }
 
 export let bodyBag = {
@@ -237,6 +253,7 @@ export let bodyBag = {
         cx.fillCircle(6, 0, 16)
         cx.strokeCircle(6, 0, 16)
     },
+    renderLayer: ITEM,
 }
 
 export let slide = {
@@ -247,6 +264,7 @@ export let slide = {
         cx.fillRect(-4, -8, 8, 16)
         cx.strokeRect(-4, -8, 8, 16)
     },
+    renderLayer: ITEM,
 }
 
 export let slideBlood = {
@@ -259,4 +277,5 @@ export let slideBlood = {
         cx.fillStyle(0xcc0000, 0.7)
         cx.fillCircle(0, 0, 3)
     },
+    renderLayer: ITEM,
 }
