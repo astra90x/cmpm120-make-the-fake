@@ -3,13 +3,28 @@ export let player = {
     size: 56,
     inventorySize: 8,
     inventoryActiveAt: { x: 30, y: 18, angle: 0 },
-    render(cx) {
+    render(cx, e) {
+        // body
+        cx.fillStyle(0xdf9778)
+        cx.lineStyle(4, 0x444444)
+        cx.fillCircle(0, 0, 28)
+        cx.strokeCircle(0, 0, 28)
+
+        // eyes
+        cx.fillStyle(0x000000)
+        cx.fillCircle(10, -6, 5)
+        cx.fillCircle(10, 6, 5)
+
+        cx.fillStyle(0xffffff)
+        cx.fillCircle(10 + 1.5 * Math.cos(-e.angle - Math.PI / 2), -6 + 1.5 * Math.sin(-e.angle - Math.PI / 2), 2)
+        cx.fillCircle(10 + 1.5 * Math.cos(-e.angle - Math.PI / 2), 6 + 1.5 * Math.sin(-e.angle - Math.PI / 2), 2)
+
+        // hands
         cx.fillStyle(0xdf9778)
         cx.lineStyle(4, 0x444444)
         for (let [x, y, radius] of [
-            [0, 0, 28],
-            [22, -18, 8],
-            [22, 18, 8],
+            [22, -22, 8],
+            [22, 22, 8],
         ]) {
             cx.fillCircle(x, y, radius)
             cx.strokeCircle(x, y, radius)
@@ -23,10 +38,11 @@ export let enemy = {
     inventorySize: 2,
     inventoryActiveAt: { x: 30, y: 18, angle: 0 },
     render(cx, e) {
+        // body inner
         cx.fillStyle(0xefcab8)
-        cx.lineStyle(4, 0x444444)
         cx.fillCircle(0, 0, 28)
 
+        // blood
         if (e.health < 0.95) {
             cx.fillStyle(0xcc0000, 0.7)
             cx.fillCircle(5, 1, Math.sqrt(1 - e.health / 0.95) * 15)
@@ -34,16 +50,37 @@ export let enemy = {
                 cx.fillCircle(-6, -3, Math.sqrt(1 - e.health / 0.6) * 6)
             }
         }
+
+        // eyes
+        if (e.health === 0 || e.hasEffect('unconscious')) {
+            cx.fillStyle(0x000000)
+            cx.fillRect(10 - 1, -6 - 4, 2, 8)
+            cx.fillRect(10 - 1, 6 - 4, 2, 8)
+        } else {
+            cx.fillStyle(0x000000)
+            cx.fillCircle(10, -6, 5)
+            cx.fillCircle(10, 6, 5)
+
+            cx.fillStyle(0xffffff)
+            cx.fillCircle(10 + 1.5 * Math.cos(-e.angle - Math.PI / 2), -6 + 1.5 * Math.sin(-e.angle - Math.PI / 2), 2)
+            cx.fillCircle(10 + 1.5 * Math.cos(-e.angle - Math.PI / 2), 6 + 1.5 * Math.sin(-e.angle - Math.PI / 2), 2)
+        }
+
+        // bound
         if (e.hasEffect('bound')) {
             cx.fillStyle(0xdddddd, 0.7)
             cx.fillRect(-10, -27, 20, 54)
         }
+
+        // body outer
+        cx.lineStyle(4, 0x444444)
         cx.strokeCircle(0, 0, 28)
 
+        // hands
         cx.fillStyle(0xefcab8)
         for (let [x, y, radius] of [
-            [22, -18, 8],
-            [22, 18, 8],
+            [22, -22, 8],
+            [22, 22, 8],
         ]) {
             cx.fillCircle(x, y, radius)
             cx.strokeCircle(x, y, radius)

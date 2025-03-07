@@ -27,6 +27,7 @@ const Entity = class {
 
         this.x = NaN
         this.y = NaN
+        this.velocity = { x: 0, y: 0 }
         this.angle = 0
         this.kind = ''
         this.definition = null
@@ -123,13 +124,18 @@ const Entity = class {
 
             if (!this.hasEffect('bound')) {
                 let factor = Math.max(1, Math.sqrt(this.control.move.x * this.control.move.x + this.control.move.y * this.control.move.y))
-                this.x += this.control.move.x / factor * 5
-                this.y += this.control.move.y / factor * 5
+                this.velocity.x += this.control.move.x / factor * 5
+                this.velocity.y += this.control.move.y / factor * 5
                 if (this.control.aim.x || this.control.aim.y) {
                     this.angle = Math.atan2(this.control.aim.y, this.control.aim.x)
                 }
             }
         }
+
+        this.x += this.velocity.x * 0.2
+        this.y += this.velocity.y * 0.2
+        this.velocity.x *= 0.8
+        this.velocity.y *= 0.8
     }
 
     destroy() {
