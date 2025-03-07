@@ -101,7 +101,7 @@ export let wall = {
         cx.fillStyle(0x999999)
         cx.fillRect(-width / 2, -height / 2, width, height)
         cx.lineStyle(4, 0x444444)
-        cx.strokeRect(-width / 2, -height / 2, width, height)
+        cx.strokeRoundedRect(-width / 2, -height / 2, width, height, 2)
     },
     renderLayer: BACKGROUND,
 }
@@ -114,9 +114,9 @@ export let couch = {
         cx.fillStyle(0x76030d)
         cx.fillRect(-width / 2, -height / 2, width, height)
         cx.lineStyle(4, 0x444444)
-        cx.strokeRect(-width / 2, -height / 2, width, height)
+        cx.strokeRoundedRect(-width / 2, -height / 2, width, height, 2)
         let armRest = 14
-        cx.strokeRect(-width / 2 + armRest, -height / 2 + armRest, width - armRest, height - armRest * 2)
+        cx.strokeRoundedRect(-width / 2 + armRest, -height / 2 + armRest, width - armRest, height - armRest * 2, 2)
     },
     renderLayer: FURNITURE,
 }
@@ -148,7 +148,7 @@ export let knife = {
         cx.fillStyle(0x111111)
         cx.lineStyle(3, 0x444444)
         cx.fillRect(-8, -4, 8, 8)
-        cx.strokeRect(-8, -4, 8, 8)
+        cx.strokeRoundedRect(-8, -4, 8, 8, 2)
     },
     renderLayer: ITEM,
 }
@@ -164,7 +164,7 @@ export let syringe = {
         cx.fillStyle(0xdddddd, 0.3)
         cx.lineStyle(3, 0x444444)
         cx.fillRect(-8, -4, 14, 8)
-        cx.strokeRect(-8, -4, 14, 8)
+        cx.strokeRoundedRect(-8, -4, 14, 8, 2)
         cx.fillStyle(0x444444)
         cx.fillTriangle(6, -2, 6, 2, 18, 0)
     },
@@ -182,7 +182,7 @@ export let syringeM99 = {
         cx.fillStyle(0x990099, 0.7)
         cx.lineStyle(3, 0x444444)
         cx.fillRect(-8, -4, 14, 8)
-        cx.strokeRect(-8, -4, 14, 8)
+        cx.strokeRoundedRect(-8, -4, 14, 8, 2)
         cx.fillStyle(0x444444)
         cx.fillTriangle(6, -2, 6, 2, 18, 0)
     },
@@ -202,7 +202,7 @@ export let syringeBlood = {
         cx.fillStyle(0xcc0000, 0.7)
         cx.lineStyle(3, 0x444444)
         cx.fillRect(-8, -4, 14, 8)
-        cx.strokeRect(-8, -4, 14, 8)
+        cx.strokeRoundedRect(-8, -4, 14, 8, 2)
         cx.fillStyle(0x444444)
         cx.fillTriangle(6, -2, 6, 2, 18, 0)
     },
@@ -222,7 +222,7 @@ export let plasticWrap = {
         cx.fillStyle(0xdddddd, 0.5)
         cx.lineStyle(3, 0x444444)
         cx.fillRect(-6, -16, 12, 32)
-        cx.strokeRect(-6, -16, 12, 32)
+        cx.strokeRoundedRect(-6, -16, 12, 32, 2)
     },
     renderLayer: ITEM,
 }
@@ -273,7 +273,7 @@ export let slideBlood = {
         cx.fillStyle(0xcccccc, 0.2)
         cx.lineStyle(3, 0x444444)
         cx.fillRect(-4, -8, 8, 16)
-        cx.strokeRect(-4, -8, 8, 16)
+        cx.strokeRoundedRect(-4, -8, 8, 16, 2)
         cx.fillStyle(0xcc0000, 0.7)
         cx.fillCircle(0, 0, 3)
     },

@@ -363,7 +363,7 @@ const Game = class {
         for (let i = 0; i < inventory.length; i++) {
             let rx = i - (inventory.length - 1) / 2
             this.cx.fillStyle(0x000000, i === this.player.inventoryActiveIndex ? 0.3 : 0.1)
-            this.cx.fillRect(this.cx.width / 2 + rx * 80 - 30, this.cx.height - 80, 60, 60)
+            this.cx.fillRoundedRect(this.cx.width / 2 + rx * 80 - 30, this.cx.height - 80, 60, 60, 8)
             if (inventory[i]) {
                 this.renderEntity(inventory[i], { x: this.cx.width / 2 + rx * 80, y: this.cx.height - 50 })
             }
