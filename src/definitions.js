@@ -120,7 +120,7 @@ export let player = {
     physics: { shape: 'circle', mass: 50 },
     size: 56,
     inventorySize: 8,
-    inventoryActiveAt: { x: 30, y: 18, angle: 0 },
+    inventoryActiveAt: { x: 30, y: 22, angle: 0 },
     render(cx, e) {
         // body
         cx.fillStyle(0xdf9778)
@@ -322,6 +322,28 @@ export let syringeBlood = {
         cx.strokeRoundedRect(-8, -4, 14, 8, 2)
         cx.fillStyle(0x444444)
         cx.fillTriangle(6, -2, 6, 2, 18, 0)
+    },
+    renderLayer: ITEM,
+}
+
+export let smellingSalt = {
+    item: 'Smelling Salt',
+    use({ target, self }) {
+        if (!(target?.kind === 'enemy' && target.hasEffect('unconscious'))) return
+        getSynth().playNote({ duration: 0.2, frequency: 261.63 ** (1 + 4/12) })
+        target.addEffect('unconscious', 0)
+    },
+    render(cx) {
+        cx.fillStyle(0xffffff)
+        cx.lineStyle(1, 0x444444)
+        for (let i = -1.5; i <= 1.5; i++) {
+            for (let j = -1.5; j <= 1.5; j++) {
+                let x = i * 6
+                let y = j * 6
+                cx.fillCircle(x, y, 2)
+                cx.strokeCircle(x, y, 2)
+            }
+        }
     },
     renderLayer: ITEM,
 }

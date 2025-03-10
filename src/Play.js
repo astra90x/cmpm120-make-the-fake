@@ -183,6 +183,7 @@ const World = class {
         player.grab(this.spawn('knife'))
         player.grab(this.spawn('syringeM99'), true)
         player.grab(this.spawn('plasticWrap'))
+        player.grab(this.spawn('smellingSalt'))
         player.grab(this.spawn('slide'))
         player.grab(this.spawn('plasticBag'))
 
@@ -368,6 +369,13 @@ const Game = class {
                 this.renderEntity(inventory[i], { x: this.cx.width / 2 + rx * 80, y: this.cx.height - 50 })
             }
         }
+        let active = inventory[this.player.inventoryActiveIndex]
+        if (active?.definition.item) {
+            this.cx.fillStyle(0x000000)
+            this.cx.fillText(this.cx.width / 2 - 300 + 2, this.cx.height - 128 + 2, { width: 600, height: 20 }, active.definition.item)
+            this.cx.fillStyle(0xffffff)
+            this.cx.fillText(this.cx.width / 2 - 300, this.cx.height - 128, { width: 600, height: 20 }, active.definition.item)
+        }
     }
 
     mouseDown() {
@@ -491,7 +499,11 @@ export const Play = class extends Phaser.Scene {
         this.input.on('pointerdown', e => this.gameLogic.mouseDown(e.position))
         this.input.on('pointermove', e => this.gameLogic.mouseMove(e.position))
         this.input.on('pointerup', e => this.gameLogic.mouseUp(e.position))
-        this.input.keyboard.on('keydown', e => !e.repeat && this.gameLogic.keyDown(e.code))
+        this.input.keyboard.on('keydown', e => {
+            !e.repeat && this.gameLogic.keyDown(e.code)
+            if (e.code === 'Escape')
+                this.scene.start('Start')
+        })
         this.input.keyboard.on('keyup', e => this.gameLogic.keyUp(e.code))
     }
 
