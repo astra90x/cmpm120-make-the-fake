@@ -1,3 +1,116 @@
+export const Synth = class {
+    constructor(ax = new AudioContext()) {
+        this.ax = ax
+        this.out = new GainNode(ax)
+        this.out.connect(ax.destination)
+        this.volume = 1
+        this.hasPlayedNote = false
+
+        this.instruments = new Map()
+
+        this.createInstrument('piano', {
+            gain: 0.25,
+            harmonics: [1000, 800, 50, 160, 160, 160, 160, 70, 25, 25, 10, 100, 50, 10, 100, 12, 0, 0, 1, 1, 2, 4, 6, 8],
+            inharmonicity: [
+                { start: 0, end: 4, coefficient: 1 },
+                { start: 4, end: 8, coefficient: 1.015625 },
+                { start: 8, end: 16, coefficient: 1.03125 },
+                { start: 16, end: 24, coefficient: 1.0625 },
+            ],
+            adsr: {
+                attackDuration: 0.025,
+                decayHalflife: 0.3,
+                sustainLevel: 0,
+                releaseDuration: 0.1,
+            },
+            lowpass(frequency, t) {
+                frequency.setValueAtTime(3520, t)
+                frequency.exponentialRampToValueAtTime(880, t + 0.025)
+                frequency.exponentialRampToValueAtTime(660, t + 0.4)
+            },
+        })
+    }
+
+    setVolume(volume) {
+        if (volume === this.volume) return
+        this.volume = volume
+
+        let rawVolume = volume * volume
+        if (this.hasPlayedNote) {
+            this.out.gain.setValueAtTime(rawVolume, this.ax.currentTime)
+        } else {
+            this.out.gain.linearRampToValueAtTime(rawVolume, this.ax.currentTime + 0.01)
+        }
+    }
+
+    createInstrument(id, instrument) {
+        let waves = []
+        let scale = Math.max(...instrument.harmonics)
+        for (let { start, end, coefficient } of instrument.inharmonicity) {
+            let real = [0, ...instrument.harmonics.map((m, i) => i >= start && i < end ? m / scale : 0)]
+            let imag = Array(real.length).fill(0)
+
+            let wave = new PeriodicWave(this.ax, { real, imag, disableNormalization: true })
+            waves.push({ wave, coefficient })
+        }
+
+        this.instruments.set(id, {
+            ...instrument,
+            waves,
+        })
+    }
+
+    scheduleNote({ time, duration, frequency, gain: noteGain = 1, id = 'piano' }) {
+        let { gain: iGain, waves, adsr, lowpass } = this.instruments.get(id)
+
+        let startAt = time
+        let peakAt = startAt + Math.min(duration / 2, adsr.attackDuration)
+        let decayTau = adsr.decayHalflife / Math.LN2
+        let releaseAt = time + duration
+        let stopAt = releaseAt + adsr.releaseDuration
+        let gain = iGain * noteGain
+
+        let g = new GainNode(this.ax)
+        g.gain.setValueAtTime(0, startAt)
+        g.gain.linearRampToValueAtTime(gain, peakAt)
+        g.gain.setTargetAtTime(gain * adsr.sustainLevel, peakAt, decayTau)
+        g.gain.setValueAtTime(gain * (adsr.sustainLevel + (1 - adsr.sustainLevel) * Math.exp((peakAt - releaseAt) / decayTau)), releaseAt)
+        g.gain.linearRampToValueAtTime(0, stopAt)
+        g.connect(this.out)
+        this.hasPlayedNote = true
+
+        let l = new BiquadFilterNode(this.ax, {
+            Q: 0,
+        })
+        lowpass(l.frequency, startAt)
+        l.connect(g)
+
+        for (let { wave, coefficient } of waves) {
+            let o = new OscillatorNode(this.ax, {
+                frequency: frequency * coefficient,
+                periodicWave: wave,
+            })
+            o.start(startAt)
+            o.stop(stopAt)
+            o.connect(l)
+        }
+    }
+
+    playNote(options) {
+        this.scheduleNote({ ...options, time: this.ax.currentTime })
+    }
+
+    play(notes) {
+        for (let note of notes) this.scheduleNote(note)
+    }
+}
+
+let getSynth = () => {
+    let synth = new Synth()
+    getSynth = () => synth
+    return synth
+}
+
 const BACKGROUND = 0
 const FURNITURE = 1
 const ITEM = 2
@@ -137,6 +250,7 @@ export let knife = {
     item: 'Hunting Knife',
     use({ target }) {
         if (!(target?.kind === 'enemy' && target.health > 0)) return
+        getSynth().playNote({ duration: 0.2, frequency: 261.63 })
         target.incomingDamage += target.hasEffect('bound') || target.hasEffect('unconscious') ? 1 : 0.25
     },
     render(cx) {
@@ -157,6 +271,7 @@ export let syringe = {
     item: 'Syringe',
     use({ target, self }) {
         if (!(target?.kind === 'enemy' && target.health > 0)) return
+        getSynth().playNote({ duration: 0.2, frequency: 261.63 ** (1 + 5/12) })
         target.incomingDamage += 0.005
         self.define('syringeBlood')
     },
@@ -175,6 +290,7 @@ export let syringeM99 = {
     item: 'Syringe of M99',
     use({ target, self }) {
         if (!(target?.kind === 'enemy' && target.health > 0)) return
+        getSynth().playNote({ duration: 0.2, frequency: 261.63 ** (1 + 4/12) })
         target.addEffect('unconscious', 5 * 60)
         self.define('syringe')
     },
@@ -196,6 +312,7 @@ export let syringeBlood = {
         if (slide) {
             slide.define('slideBlood')
             self.define('syringe')
+            getSynth().playNote({ duration: 0.2, frequency: 261.63 ** (1 + 7/12) })
         }
     },
     render(cx) {
@@ -215,6 +332,7 @@ export let plasticWrap = {
         if (!(target?.kind === 'enemy' && target.hasEffect('unconscious'))) return
         target.addEffect('bound')
         self.destroy()
+        getSynth().playNote({ duration: 0.2, frequency: 261.63 ** (1 + 2/12) })
     },
     render(cx) {
         cx.fillStyle(0x6b5531)
@@ -233,6 +351,7 @@ export let plasticBag = {
         if (!(target?.kind === 'enemy' && target.health === 0)) return
         target.destroy()
         self.define('bodyBag')
+        getSynth().playNote({ duration: 0.2, frequency: 261.63 ** (11/12) })
     },
     render(cx) {
         cx.fillStyle(0x222222, 0.9)
