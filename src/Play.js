@@ -288,13 +288,24 @@ const Game = class {
     constructor(cx) {
         this.cx = cx
 
+        this.menu = ['home']
+
         this.world = new World()
         this.lastWorldUpdate = -Infinity
-
         this.player = this.world.populate()
 
+        this.hasSave = false
+
         this.keys = {}
-        this.mouse = { x: this.cx.width / 2, y: this.cx.height }
+        this.mouse = { x: this.cx.width / 2, y: this.cx.height, clicked: false, down: false }
+    }
+
+    reset() {
+        this.world = new World()
+        this.lastWorldUpdate = -Infinity
+        this.player = this.world.populate()
+
+        this.hasSave = true
     }
 
     render(time, delta) {
@@ -302,16 +313,28 @@ const Game = class {
         this.player.control.move.y = !!this.keys.KeyS - !!this.keys.KeyW
         this.player.control.aim = { x: this.mouse.x - this.cx.width / 2, y: this.mouse.y - this.cx.height / 2 }
 
-        let mspt = 0.02 // 50 TPS
+        let mspt = this.menu.length === 0 ? 0.02 : Infinity // 50 TPS
         if (this.lastWorldUpdate < time - mspt) {
             this.world.update()
             this.lastWorldUpdate = Math.max(this.lastWorldUpdate + mspt, time - mspt / 2)
         }
 
         this.cx.startFrame()
-        this.renderWorld()
-        this.renderInterface()
+        if (this.menu[0] !== 'home') {
+            this.renderWorld()
+            this.renderInterface()
+            if (this.menu.length > 0) {
+                this.cx.fillStyle(0x483421, 0.3)
+                this.cx.fillRect(0, 0, this.cx.width, this.cx.height)
+            }
+        } else {
+            this.cx.fillStyle(0x786451)
+            this.cx.fillRect(0, 0, this.cx.width, this.cx.height)
+        }
+        if (this.menu.length > 0) this.renderMenu()
         this.cx.endFrame()
+
+        this.mouse.clicked = false
     }
 
     renderEntity(e, at = null) {
@@ -372,13 +395,104 @@ const Game = class {
         let active = inventory[this.player.inventoryActiveIndex]
         if (active?.definition.item) {
             this.cx.fillStyle(0x000000)
-            this.cx.fillText(this.cx.width / 2 - 300 + 2, this.cx.height - 128 + 2, { width: 600, height: 20 }, active.definition.item)
+            this.cx.fillText(this.cx.width / 2 - 300 + 2, this.cx.height - 120 + 2, { width: 600, height: 20 }, active.definition.item)
             this.cx.fillStyle(0xffffff)
-            this.cx.fillText(this.cx.width / 2 - 300, this.cx.height - 128, { width: 600, height: 20 }, active.definition.item)
+            this.cx.fillText(this.cx.width / 2 - 300, this.cx.height - 120, { width: 600, height: 20 }, active.definition.item)
+        }
+    }
+
+    renderMenu() {
+        this.cx.fillStyle(0x000000)
+
+        let texts = {
+            'controls': 'Use W/A/S/D to move.\nLeft click to use your held item.\nUse 1-8 to switch your held item.\nUse F to pick up items, or Q to drop them.\nPress Escape to open the pause menu.',
+            'audio': null,
+            'display': `Game resolution: ${this.cx.width}x${this.cx.height}\nScreen resolution: ${screen.width}x${screen.height}`,
+            'killers': `You are Dexter Morgan, also known as the Bay\nHarbor Butcher, a blood-spatter analyst working\nat the Miami Metro Police Department, and\nalso a serial killer who kills other serial killers.`,
+            'credits': 'Game designed and programmed by Astra Tsai\n\nInspire by the fictional game\nHomicidal Tendencies from the TV series Dexter\n\nFont designed by Dalton Maag'
+        }
+
+        let menu = this.menu[this.menu.length - 1]
+        let items = menu === 'home' ? [
+            { text: 'CONTROLS', click: () => this.menu.push('controls') },
+            { text: 'AUDIO', click: () => this.menu.push('audio') },
+            { text: 'DISPLAY', click: () => this.menu.push('display') },
+            { text: 'KILLERS', click: () => this.menu.push('killers') },
+            { text: 'CREDITS', click: () => this.menu.push('credits') },
+            // CONFIGURE
+            { text: 'NEW GAME', click: () => (this.reset(), this.menu.pop()) },
+            // SAVES
+            this.hasSave && { text: 'CONTINUE GAME', click: () => this.menu.pop() },
+        ] : menu === 'pause' ? [
+            { text: 'CONTROLS', click: () => this.menu.push('controls') },
+            { text: 'AUDIO', click: () => this.menu.push('audio') },
+            { text: 'DISPLAY', click: () => this.menu.push('display') },
+            { text: 'KILLERS', click: () => this.menu.push('killers') },
+            // CONFIGURE
+            { text: 'NEW GAME', click: () => (this.reset(), this.menu.pop()) },
+            { text: 'QUIT GAME', click: () => this.menu = ['home'] },
+            // SAVES
+            { text: 'CLOSE', click: () => this.menu.pop() },
+        ] : [
+            { text: 'CLOSE', click: () => this.menu.pop() },
+        ]
+
+        items = items.filter(x => x)
+
+        this.cx.fillStyle(0x988471)
+        this.cx.fillRect(275, 50, this.cx.width - 550, this.cx.height - 175)
+        this.cx.lineStyle(4, 0x444444)
+        this.cx.strokeRoundedRect(275, 50, this.cx.width - 550, this.cx.height - 175, 2)
+
+        this.cx.fillStyle(0x757a7d)
+        this.cx.fillRect(300, 75, 250, this.cx.height - 225)
+        this.cx.lineStyle(4, 0x444444)
+        this.cx.strokeRoundedRect(300, 75, 250, this.cx.height - 225, 2)
+
+        for (let i = 0; i < items.length; i++) {
+            let x = 335
+            let y = 75 + (this.cx.height - 225) / 2 + (i - (items.length - 1) / 2) * 70 - 35 / 2
+            let w = 175
+            let h = 35
+            let hover = this.mouse.x >= x && this.mouse.x < x + w && this.mouse.y >= y && this.mouse.y < y + h
+            let held = hover && this.mouse.down
+            let clicked = hover && this.mouse.clicked
+
+            this.cx.fillStyle(held && hover ? 0x949b92 : hover ? 0xc4cbc2 : 0xb4bbb2)
+            this.cx.fillRect(x, y, w, h)
+            this.cx.lineStyle(4, 0x444444)
+            this.cx.strokeRoundedRect(x, y, w, h, 2)
+
+            this.cx.fillStyle(0x222222)
+            this.cx.fillText(x, y + 9, { width: w, height: 16 }, items[i].text)
+
+            if (clicked) items[i].click()
+        }
+
+        this.cx.fillStyle(0x757a7d)
+        this.cx.fillRect(600, this.cx.height - 300, this.cx.width - 925, 120)
+        this.cx.fillStyle(0x444444)
+        this.cx.strokeRoundedRect(600, this.cx.height - 300, this.cx.width - 925, 120, 2)
+
+        this.cx.fillStyle(0xb4bbb2)
+        this.cx.fillRect(600 + 30, this.cx.height - 300 + 20, this.cx.width - 925 - 90, 120 - 40)
+        this.cx.fillStyle(0x444444)
+        this.cx.strokeRoundedRect(600 + 30, this.cx.height - 300 + 20, this.cx.width - 925 - 90, 120 - 40, 2)
+        this.cx.fillStyle(0x222222)
+        this.cx.fillText(600 + 30, this.cx.height - 300 + 27, { width: this.cx.width - 925 - 90, height: 60 }, 'TENDENCIES')
+        this.cx.fillStyle(0xff0000, 0.7)
+        this.cx.fillText(600 + 30, this.cx.height - 300 - 27, { width: this.cx.width - 925 - 200, height: 80 }, 'Homicidal')
+
+        if (texts[menu] != null) {
+            // this.cx.fillRect(600, 100, this.cx.width - 925, this.cx.height - 450)
+            this.cx.fillStyle(0x222222)
+            this.cx.fillText(600, 250, { width: this.cx.width - 925, height: 28 }, texts[menu])
         }
     }
 
     mouseDown() {
+        this.mouse.down = true
+
         let item = this.player.inventory[this.player.inventoryActiveIndex]
         if (item == null) return
 
@@ -396,10 +510,12 @@ const Game = class {
         item.definition.use?.({ target: closest, self: item, player: this.player })
     }
     mouseMove(mouse) {
-        this.mouse = mouse
+        this.mouse.x = mouse.x
+        this.mouse.y = mouse.y
     }
     mouseUp() {
-
+        this.mouse.clicked = true
+        this.mouse.down = false
     }
     keyDown(key) {
         this.keys[key] = true
@@ -418,6 +534,14 @@ const Game = class {
                 }
             }
             this.player.grab(closest)
+        }
+        if (key === 'Escape') {
+            if (this.menu[0] === 'home') {
+                if (this.menu.length > 1) this.menu.pop()
+            } else {
+                if (this.menu.length > 0) this.menu.pop()
+                else this.menu.push('pause')
+            }
         }
     }
     keyUp(key) {
@@ -499,11 +623,7 @@ export const Play = class extends Phaser.Scene {
         this.input.on('pointerdown', e => this.gameLogic.mouseDown(e.position))
         this.input.on('pointermove', e => this.gameLogic.mouseMove(e.position))
         this.input.on('pointerup', e => this.gameLogic.mouseUp(e.position))
-        this.input.keyboard.on('keydown', e => {
-            !e.repeat && this.gameLogic.keyDown(e.code)
-            if (e.code === 'Escape')
-                this.scene.start('Start')
-        })
+        this.input.keyboard.on('keydown', e => !e.repeat && this.gameLogic.keyDown(e.code))
         this.input.keyboard.on('keyup', e => this.gameLogic.keyUp(e.code))
     }
 
