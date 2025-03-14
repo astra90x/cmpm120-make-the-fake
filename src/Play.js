@@ -1,4 +1,4 @@
-import * as DEFINITIONS from './definitions.js'
+import * as PREFABS from './prefabs.js'
 
 const Controller = class {
     constructor(entity, waypoints, world) {
@@ -64,7 +64,7 @@ const Entity = class {
         if (options.y != null) this.y = options.y
         if (options.angle != null) this.angle = options.angle
         this.kind = kind
-        this.definition = DEFINITIONS[kind]
+        this.definition = PREFABS[kind]
         this.size = options.size ?? options.width ?? this.definition.size ?? this.definition.width ?? this.size
         this.height = options.height ?? this.definition.height ?? this.height
     }
