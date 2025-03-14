@@ -219,6 +219,17 @@ export let wall = {
     renderLayer: BACKGROUND,
 }
 
+export let fence = {
+    physics: { shape: 'rect' },
+    render(cx, { width, height }) {
+        cx.fillStyle(0xb08968)
+        cx.fillRect(-width / 2, -height / 2, width, height)
+        cx.lineStyle(4, 0x444444)
+        cx.strokeRoundedRect(-width / 2, -height / 2, width, height, 2)
+    },
+    renderLayer: BACKGROUND,
+}
+
 export let couch = {
     physics: { shape: 'rect' },
     width: 50,

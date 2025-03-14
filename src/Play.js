@@ -159,6 +159,11 @@ const World = class {
     }
 
     populate() {
+        this.spawn('fence', { x: -200, y: 0, width: 20, height: 1220 })
+        this.spawn('fence', { x: 1000, y: 0, width: 20, height: 1220 })
+        this.spawn('fence', { x: 400, y: -600, width: 1180, height: 20 })
+        this.spawn('fence', { x: 400, y: 600, width: 1180, height: 20 })
+
         this.spawn('wall', { x: 135, y: 0, width: 250, height: 20 })
         this.spawn('wall', { x: 565, y: 0, width: 450, height: 20 })
         this.spawn('wall', { x: 0, y: 200, width: 20, height: 420 })
@@ -359,7 +364,7 @@ const Game = class {
         let viewBottom = camera.y + this.cx.height / 2
         this.cx.translateCanvas(-viewLeft, -viewTop)
 
-        let tileSize = 400
+        let tileSize = 200
         let tileXStart = Math.floor(viewLeft / tileSize)
         let tileXEnd = Math.ceil(viewRight / tileSize)
         let tileYStart = Math.floor(viewTop / tileSize)
@@ -367,8 +372,12 @@ const Game = class {
 
         for (let iy = tileYStart; iy < tileYEnd; iy++) {
             for (let ix = tileXStart; ix < tileXEnd; ix++) {
-                this.cx.fillStyle(ix >= 0 && ix <= 1 && iy === 0 ? 0x8a6539 : 0x7cb038)
-                this.cx.fillRect(ix * tileSize, iy * tileSize, tileSize, tileSize)
+                this.cx.fillStyle(
+                    ix >= 0 && ix <= 3 && iy >= 0 && iy <= 1 ? 0x8a6539 :
+                    ix >= -1 && ix <= 4 && iy >= -3 && iy <= 2 ? 0x7cb038 :
+                        0x444444
+                )
+                this.cx.fillRect(ix * tileSize, iy * tileSize, tileSize + 1, tileSize + 1)
             }
         }
 
