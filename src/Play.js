@@ -551,7 +551,6 @@ const Game = class {
         this.cx.fillText(600 + 30, this.cx.height - 300 - 27, { width: this.cx.width - 925 - 200, height: 80 }, 'Homicidal')
 
         if (texts[menu] != null) {
-            // this.cx.fillRect(600, 100, this.cx.width - 925, this.cx.height - 450)
             this.cx.fillStyle(0x000000)
             this.cx.fillText(600 + 2, 250 + 2, { width: this.cx.width - 925, height: 28 }, texts[menu])
             this.cx.fillStyle(0xffffff)
@@ -559,7 +558,7 @@ const Game = class {
         } else if (menu === 'audio') {
             let mute = this.audio.manager.mute
 
-            let x = 800
+            let x = 600 + (this.cx.width - 925) / 2 - 100
             let y = 300
             let w = 200
             let h = 40
@@ -577,6 +576,24 @@ const Game = class {
 
             if (clicked) {
                 this.audio.manager.setMute(!mute)
+            }
+        } else {
+            let x = 600
+            let y = 100
+            let w = this.cx.width - 925
+            let h = this.cx.height - 450
+
+            for (let i = 0; i < 20; i++) {
+                let s = 200 / (30 - i)
+                let cx = x + w / 2 + (s - 200 / (30 - 20)) * 3
+                let cy = y + h / 4 + s * 10
+
+                this.cx.fillStyle(0xcccccc, 0.2)
+                this.cx.lineStyle(s / 4, 0x444444)
+                this.cx.fillRect(cx - 8 * s, cy - 4 * s, 16 * s, 8 * s)
+                this.cx.strokeRoundedRect(cx - 8 * s, cy - 4 * s, 16 * s, 8 * s, 4)
+                this.cx.fillStyle(0xcc0000, 0.7)
+                this.cx.fillCircle(cx + ((i * Math.PI) % 2 - 1) * 0.4 * s, cy, (3 + 0.2 * ((i * Math.PI * 2) % 2 - 1)) * s)
             }
         }
     }
