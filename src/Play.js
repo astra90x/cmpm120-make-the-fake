@@ -290,14 +290,16 @@ const World = class {
 }
 
 const Game = class {
-    constructor(cx) {
+    constructor(cx, audio) {
         this.cx = cx
+        this.audio = audio
 
         this.menu = ['home']
 
         this.world = new World()
         this.lastWorldUpdate = -Infinity
         this.player = this.world.populate()
+        this.playerFootstepAt = { x: this.player.x, y: this.player.y, left: false }
 
         this.hasSave = false
 
@@ -389,6 +391,13 @@ const Game = class {
             for (let e of layer) this.renderEntity(e)
 
         this.cx.restore()
+
+        let dx = this.playerFootstepAt.x - this.player.x
+        let dy = this.playerFootstepAt.y - this.player.y
+        if (dx * dx + dy * dy > 75 * 75) {
+            this.playerFootstepAt = { x: this.player.x, y: this.player.y, left: !this.playerFootstepAt }
+            this.audio.get(`footstep${Math.floor(Math.random() * 4) + 1}${this.playerFootstepAt.left ? 'l' : 'r'}`).play({ volume: 0.1 })
+        }
     }
 
     renderInterface() {
@@ -418,7 +427,7 @@ const Game = class {
             'audio': null,
             'display': `Game resolution: ${this.cx.width}x${this.cx.height}\nScreen resolution: ${screen.width}x${screen.height}`,
             'killers': `You are Dexter Morgan, also known as the Bay\nHarbor Butcher, a blood-spatter analyst working\nat the Miami Metro Police Department, and\nalso a serial killer who kills other serial killers.`,
-            'credits': 'Game designed and programmed by Astra Tsai\n\nInspire by the fictional game\nHomicidal Tendencies from the TV series Dexter\n\nFont designed by Dalton Maag'
+            'credits': 'Game designed and programmed by Astra Tsai\n\nInspire by the fictional game\nHomicidal Tendencies from the TV series Dexter\n\nSound effects by ZapSplat\nFont designed by Dalton Maag'
         }
 
         let menu = this.menu[this.menu.length - 1]
@@ -516,7 +525,7 @@ const Game = class {
                 closestD2 = d2
             }
         }
-        item.definition.use?.({ target: closest, self: item, player: this.player })
+        item.definition.use?.({ target: closest, self: item, player: this.player, audio: this.audio })
     }
     mouseMove(mouse) {
         this.mouse.x = mouse.x
@@ -627,7 +636,9 @@ export const Play = class extends Phaser.Scene {
 
     create() {
         this.graphics = new Graphics(this)
-        this.gameLogic = new Game(this.graphics)
+        let ids = ['bag', ['l', 'r'].map(f => ['1', '2', '3', '4'].map(i => `footstep${i}${f}`)), 'gasp', 'stab', 'thud', 'wrap'].flat(Infinity)
+        this.audio = new Map(ids.map(id => [id, this.sound.add(id)]))
+        this.gameLogic = new Game(this.graphics, this.audio)
 
         this.input.on('pointerdown', e => this.gameLogic.mouseDown(e.position))
         this.input.on('pointermove', e => this.gameLogic.mouseMove(e.position))

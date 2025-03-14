@@ -7,8 +7,10 @@ export const Load = class extends Phaser.Scene {
         this.gfx = this.add.graphics()
 
         this.load.font('Ubuntu', 'assets/Ubuntu-Bold.ttf', 'truetype')
+        let ids = ['bag', ['l', 'r'].map(f => ['1', '2', '3', '4'].map(i => `footstep${i}${f}`)), 'gasp', 'stab', 'thud', 'wrap'].flat(Infinity)
+        for (let id of ids)
+            this.load.audio(id, `assets/audio/${id}.mp3`)
 
-        // this would be more useful if Phaser isn't being used, because Phaser is much larger than this font
         this.load.on('progress', progress => {
             this.gfx.clear()
             this.gfx.fillStyle(0x333333)
