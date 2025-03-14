@@ -184,7 +184,7 @@ const World = class {
             { x: 300, y: 0 },
         ], this)
 
-        let player = this.spawn('player', { x: 100, y: -50 })
+        let player = this.spawn('player', { x: 400 + Math.random() * 150, y: -50 - Math.random() * 50 })
         player.grab(this.spawn('knife'))
         player.grab(this.spawn('syringeM99'), true)
         player.grab(this.spawn('plasticWrap'))
@@ -192,7 +192,7 @@ const World = class {
         player.grab(this.spawn('slide'))
         player.grab(this.spawn('plasticBag'))
 
-        return player
+        return [enemy, player]
     }
 
     update() {
@@ -298,7 +298,7 @@ const Game = class {
 
         this.world = new World()
         this.lastWorldUpdate = -Infinity
-        this.player = this.world.populate()
+        ;[this.enemy, this.player] = this.world.populate()
         this.playerFootstepAt = { x: this.player.x, y: this.player.y, left: false }
 
         this.hasSave = false
@@ -310,7 +310,8 @@ const Game = class {
     reset() {
         this.world = new World()
         this.lastWorldUpdate = -Infinity
-        this.player = this.world.populate()
+        ;[this.enemy, this.player] = this.world.populate()
+        this.playerFootstepAt = { x: this.player.x, y: this.player.y, left: false }
 
         this.hasSave = true
     }
@@ -324,6 +325,11 @@ const Game = class {
         if (this.lastWorldUpdate < time - mspt) {
             this.world.update()
             this.lastWorldUpdate = Math.max(this.lastWorldUpdate + mspt, time - mspt / 2)
+
+            if (this.player.y < -400) {
+                this.menu.push('completion')
+                this.hasSave = false
+            }
         }
 
         this.cx.startFrame()
@@ -410,6 +416,9 @@ const Game = class {
                 this.renderEntity(inventory[i], { x: this.cx.width / 2 + rx * 80, y: this.cx.height - 50 })
             }
         }
+
+        if (this.menu.length > 0) return
+
         let active = inventory[this.player.inventoryActiveIndex]
         if (active?.definition.item) {
             this.cx.fillStyle(0x000000)
@@ -417,6 +426,42 @@ const Game = class {
             this.cx.fillStyle(0xffffff)
             this.cx.fillText(this.cx.width / 2 - 300, this.cx.height - 120, { width: 600, height: 20 }, active.definition.item)
         }
+
+        let has = kind => this.player.inventory.some(x => x?.kind === kind)
+
+        let notice =
+            has('bodyBag') ? 'Objective: Exit north to complete your hunt.' :
+            this.player.y < -200 ? 'Warning: Your hunt is not complete and will be\nconsidered abandoned if you move further north!' :
+            this.enemy.health === 0 ? 'Objective: Collect the body into the plastic bag.' :
+            has('slideBlood') ? 'Objective: Stab your victim through the heart.' :
+            has('syringeBlood') ? 'Objective: Place the blood sample into\nthe blood slide to make your trophy.' :
+            this.enemy.hasEffect('bound') && !this.enemy.hasEffect('unconscious') ? 'Objective: Collect a blood sample with the needle.' :
+            this.enemy.hasEffect('bound') ? 'Objective: Wake your victim with the smelling salt.' :
+            this.enemy.hasEffect('unconscious') ? 'Objective: Bind your victim with the plastic wrap.' :
+                'Objective: Subdue your victim with the tranquilizer.'
+
+        this.cx.fillStyle(0x000000)
+        this.cx.fillText(this.cx.width / 2 - 300 + 2, 200 + 2, { width: 600, height: 24 }, notice)
+        this.cx.fillStyle(0xffffff)
+        this.cx.fillText(this.cx.width / 2 - 300, 200, { width: 600, height: 24 }, notice)
+    }
+
+    getScoreSummary() {
+        let has = kind => this.player.inventory.some(x => x?.kind === kind)
+
+        let score = this.enemy.health === 0 ? (
+            100
+                + (has('bodyBag') ? 500 : 0)
+                + (has('slideBlood') ? 400 : has('syringeBlood') ? 100 : 0)
+        ) : 0
+
+        let summary =
+            this.enemy.health > 0 ? 'Try to actually kill your victim...' :
+            !has('bodyBag') ? 'Make sure you don\'t leave around\na dead body next time!' :
+            !has('slideBlood') ? 'Unfortunately, you don\'t seem to have your trophy.' :
+                'Good job! You\'ll be going out sailing soon enough...'
+
+        return `Score: ${score}\n\n${summary}`
     }
 
     renderMenu() {
@@ -427,7 +472,8 @@ const Game = class {
             'audio': null,
             'display': `Game resolution: ${this.cx.width}x${this.cx.height}\nScreen resolution: ${screen.width}x${screen.height}`,
             'killers': `You are Dexter Morgan, also known as the Bay\nHarbor Butcher, a blood-spatter analyst working\nat the Miami Metro Police Department, and\nalso a serial killer who kills other serial killers.`,
-            'credits': 'Game designed and programmed by Astra Tsai\n\nInspire by the fictional game\nHomicidal Tendencies from the TV series Dexter\n\nSound effects by ZapSplat\nFont designed by Dalton Maag'
+            'credits': 'Game designed and programmed by Astra Tsai\n\nInspire by the fictional game\nHomicidal Tendencies from the TV series Dexter\n\nSound effects by ZapSplat\nFont designed by Dalton Maag',
+            'completion': `${this.enemy.health === 0 ? 'Level complete!' : 'Level abandoned!'}\n\n${this.getScoreSummary()}`,
         }
 
         let menu = this.menu[this.menu.length - 1]
@@ -451,6 +497,9 @@ const Game = class {
             { text: 'QUIT GAME', click: () => this.menu = ['home'] },
             // SAVES
             { text: 'CLOSE', click: () => this.menu.pop() },
+        ] : menu === 'completion' ? [
+            { text: 'NEW GAME', click: () => (this.reset(), this.menu.pop()) },
+            { text: 'QUIT GAME', click: () => this.menu = ['home'] },
         ] : [
             { text: 'CLOSE', click: () => this.menu.pop() },
         ]
@@ -503,7 +552,9 @@ const Game = class {
 
         if (texts[menu] != null) {
             // this.cx.fillRect(600, 100, this.cx.width - 925, this.cx.height - 450)
-            this.cx.fillStyle(0x222222)
+            this.cx.fillStyle(0x000000)
+            this.cx.fillText(600 + 2, 250 + 2, { width: this.cx.width - 925, height: 28 }, texts[menu])
+            this.cx.fillStyle(0xffffff)
             this.cx.fillText(600, 250, { width: this.cx.width - 925, height: 28 }, texts[menu])
         } else if (menu === 'audio') {
             let mute = this.audio.manager.mute
