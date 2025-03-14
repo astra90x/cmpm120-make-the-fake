@@ -1,3 +1,12 @@
+/*
+Components:
+- Text objects
+- Graphics object
+- Audio system
+- Physics system
+- Particle system
+*/
+
 import { Load } from './Load.js'
 import { Start } from './Start.js'
 import { Play } from './Play.js'

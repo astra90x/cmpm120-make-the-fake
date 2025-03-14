@@ -290,9 +290,10 @@ const World = class {
 }
 
 const Game = class {
-    constructor(cx, audio) {
+    constructor(cx, audio, particles) {
         this.cx = cx
         this.audio = audio
+        this.particles = particles
 
         this.menu = ['home']
 
@@ -343,6 +344,10 @@ const Game = class {
         } else {
             this.cx.fillStyle(0x786451)
             this.cx.fillRect(0, 0, this.cx.width, this.cx.height)
+            this.cx.fillStyle(0xcc0000, 0.7)
+            for (let { x, y, scaleX } of this.particles.alive) {
+                this.cx.fillCircle(x, y, scaleX)
+            }
         }
         if (this.menu.length > 0) this.renderMenu()
         this.cx.endFrame()
@@ -726,10 +731,21 @@ export const Play = class extends Phaser.Scene {
 
     create() {
         this.graphics = new Graphics(this)
+
         let ids = ['bag', ['l', 'r'].map(f => ['1', '2', '3', '4'].map(i => `footstep${i}${f}`)), 'gasp', 'stab', 'thud', 'wrap'].flat(Infinity)
         this.audio = new Map(ids.map(id => [id, this.sound.add(id)]))
         this.audio.manager = this.sound
-        this.gameLogic = new Game(this.graphics, this.audio)
+
+        this.particles = this.add.particles(0, 0, '', {
+            x: { min: 0, max: this.graphics.width },
+            y: -500,
+            scale: { start: 7, end: 5 },
+            gravityY: 800,
+            lifespan: 3000,
+            visible: false,
+        })
+
+        this.gameLogic = new Game(this.graphics, this.audio, this.particles)
 
         this.input.on('pointerdown', e => this.gameLogic.mouseDown(e.position))
         this.input.on('pointermove', e => this.gameLogic.mouseMove(e.position))
