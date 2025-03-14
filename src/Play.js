@@ -505,6 +505,28 @@ const Game = class {
             // this.cx.fillRect(600, 100, this.cx.width - 925, this.cx.height - 450)
             this.cx.fillStyle(0x222222)
             this.cx.fillText(600, 250, { width: this.cx.width - 925, height: 28 }, texts[menu])
+        } else if (menu === 'audio') {
+            let mute = this.audio.manager.mute
+
+            let x = 800
+            let y = 300
+            let w = 200
+            let h = 40
+            let hover = this.mouse.x >= x && this.mouse.x < x + w && this.mouse.y >= y && this.mouse.y < y + h
+            let held = hover && this.mouse.down
+            let clicked = hover && this.mouse.clicked
+
+            this.cx.fillStyle(held && hover ? 0x949b92 : hover ? 0xc4cbc2 : 0xb4bbb2)
+            this.cx.fillRect(x, y, w, h)
+            this.cx.lineStyle(4, 0x444444)
+            this.cx.strokeRoundedRect(x, y, w, h, 2)
+
+            this.cx.fillStyle(0x222222)
+            this.cx.fillText(x, y + 9, { width: w, height: 20 }, `Sound: ${mute ? 'OFF' : 'ON'}`)
+
+            if (clicked) {
+                this.audio.manager.setMute(!mute)
+            }
         }
     }
 
@@ -638,6 +660,7 @@ export const Play = class extends Phaser.Scene {
         this.graphics = new Graphics(this)
         let ids = ['bag', ['l', 'r'].map(f => ['1', '2', '3', '4'].map(i => `footstep${i}${f}`)), 'gasp', 'stab', 'thud', 'wrap'].flat(Infinity)
         this.audio = new Map(ids.map(id => [id, this.sound.add(id)]))
+        this.audio.manager = this.sound
         this.gameLogic = new Game(this.graphics, this.audio)
 
         this.input.on('pointerdown', e => this.gameLogic.mouseDown(e.position))
